@@ -1,0 +1,56 @@
+version: "3"
+services:
+  redis:
+    container_name: redis
+    image: redis:alpine
+    ports:
+      - "6379:6379"  
+    networks:
+      - golang_backend
+    volumes: 
+      - ../data/redis:/data #数据映射目录
+  
+  golang:
+    container_name: golang
+    build: ./golang 
+    volumes:
+      - $GOPATH/src/{$project}:/go/src/{$project}  #$project为项目名称
+    entrypoint: 
+      - $GOPATH/src/{$project}/golang/build.sh   #$project为项目名称
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"  
+    networks:
+      - backend
+      - frontend
+  mysql:
+    container_name: mysql_service
+    image: mariadb:10.3
+    volumes:
+      - ../data/mysql:/var/lib/mysql #映射数据目录
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"  
+    environment:
+      MYSQL_ROOT_PASSWORD: #mysql root password
+      MYSQL_USER: # create user
+      MYSQL_PASSWORD: # add user password
+      TZ: 'Asia/Shanghai'
+      MYSQL_ROOT_HOST: "%"
+
+  nginx_server:
+    container_name: nginx_proxy
+    image: nginx
+    ports:
+      - "80:80"
+    expose:
+      - "80"
+    volumes:
+      - ./nginx/conf.d/default.conf:/etc/nginx/conf.d/default.conf 
+    networks: 
+      - frontend
+networks:
+  backend:
+ # frontend:
